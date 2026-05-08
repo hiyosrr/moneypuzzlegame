@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>\u304a\u91d1\u5408\u4f53\u30d1\u30ba\u30eb</title>
+    <title>お金合体パズル</title>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; }
         body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #f0f4f8; font-family: sans-serif; overflow: hidden; }
@@ -27,7 +27,6 @@
         #game-container { position: relative; border: 4px solid #333; border-radius: 8px; overflow: hidden; background: #fff; width: fit-content; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-top: 5px; }
         #gameCanvas { display: block; touch-action: none; }
         
-        /* ゲームオーバー判定ライン */
         #limit-line { position: absolute; top: 60px; left: 0; width: 100%; height: 2px; border-top: 2px dashed rgba(255,0,0,0.3); pointer-events: none; z-index: 1; }
 
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
@@ -53,12 +52,12 @@
 <body>
 
     <div id="menu-screen" class="overlay">
-        <h1 id="main-title"></h1>
+        <h1 id="main-title">お金合体パズル</h1>
         <div class="high-score-list" id="best-scores-info"></div>
-        <button class="btn btn-info" onclick="showInfo()"></button>
-        <button class="btn btn-easy" onclick="startGame('easy')"></button>
-        <button class="btn btn-normal" onclick="startGame('normal')"></button>
-        <button class="btn btn-hard" onclick="startGame('hard')"></button>
+        <button class="btn btn-info" onclick="showInfo()">せつめい</button>
+        <button class="btn btn-easy" onclick="startGame('easy')">かんたん</button>
+        <button class="btn btn-normal" onclick="startGame('normal')">ふつう</button>
+        <button class="btn btn-hard" onclick="startGame('hard')">むずかしい</button>
         
         <div class="coin-deco deco-gold" style="top:10%; left:10%;">500</div>
         <div class="coin-deco deco-silver" style="top:25%; right:10%;">100</div>
@@ -68,15 +67,15 @@
     </div>
 
     <div id="info-screen" class="overlay">
-        <h2 id="rule-title"></h2>
-        <p id="rule-text"></p>
-        <h2 id="diff-title"></h2>
-        <p id="diff-text"></p>
-        <button class="btn btn-back" onclick="hideInfo()"></button>
+        <h2>ルール</h2>
+        <p>硬貨を落として合体させるパズルです。<br>同じ硬貨がくっつくと合体します。<br>500円玉は消えて1000点！</p>
+        <h2>難易度</h2>
+        <p>かんたん：貯金箱が広く簡単。<br>ふつう：貯金箱が標準の大きさです。<br>むずかしい：貯金箱が狭く、難しい。</p>
+        <button class="btn btn-back" onclick="hideInfo()">戻る</button>
     </div>
 
     <div id="game-ui">
-        <button id="home-btn" onclick="goHome()"></button>
+        <button id="home-btn" onclick="goHome()">ホームに戻る</button>
         <div id="header">
             <div class="score-info">
                 <div id="score-board">SCORE: 0</div>
@@ -88,71 +87,23 @@
         </div>
         <div id="game-container">
             <div id="limit-line"></div>
-            <div id="game-over" class="overlay">
-                <h2 id="over-text" style="color:red; font-size:24px; white-space:nowrap; margin:0;"></h2>
+            <div id="game-over" class="overlay" style="display:none;">
+                <h2 style="color:red; font-size:24px; white-space:nowrap; margin:0;">ゲームオーバー</h2>
                 <div id="final-score" style="font-weight:bold; margin:10px 0;"></div>
-                <button class="btn btn-normal" onclick="goHome()" id="home-btn-retry"></button>
+                <button class="btn btn-normal" onclick="goHome()">ホームに戻る</button>
             </div>
         </div>
     </div>
 
     <script>
-        const TXT_TITLE = "\u304a\u91d1\u5408\u4f53\u30d1\u30ba\u30eb";
-        const TXT_EASY = "\u304b\u3093\u305f\u3093";
-        const TXT_NORMAL = "\u3075\u3064\u3046";
-        const TXT_HARD = "\u3080\u305a\u304b\u3057\u3044";
-        const TXT_INFO = "\u305b\u3064\u3081\u3044";
-        const TXT_BACK = "\u623b\u308b";
-        const TXT_GAMEOVER = "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc";
-        const TXT_HOME = "\u30db\u30fc\u30e0\u306b\u623b\u308b";
-        const TXT_RULE_TITLE = "\u30eb\u30fc\u30eb";
-        const TXT_DIFF_TITLE = "\u96e3\u6613\u5ea6";
-        const TXT_RULE_BODY = "\u786c\u8ca8\u3092\u843d\u3068\u3057\u3066\u5408\u4f53\u3055\u305b\u308b\u30d1\u30ba\u30eb\u3067\u3059\u3002<br>\u540c\u3058\u786c\u8ca8\u304c\u304f\u3063\u3064\u304f\u3068\u5408\u4f53\u3057\u307e\u3059\u3002<br>500\u5186\u7389\u306f\u6d88\u3048\u30661000\u70b9\uff01";
-        const TXT_DIFF_BODY = "\u304b\u3093\u305f\u3093\uff1a\u8caf\u91d1\u7bb1\u304c\u5e83\u304f\u7c21\u5358\u3002<br>\u3075\u3064\u3046\uff1a\u8caf\u91d1\u7bb1\u304c\u6a19\u6e96\u306e\u5927\u304d\u3055\u3067\u3059\u3002<br>\u3080\u305a\u304b\u3057\u3044\uff1a\u8caf\u91d1\u7bb1\u304c\u72ed\u304f\u3001\u96e3\u3057\u3044\u3002";
-        const TXT_CURRENCY = "1000\u5186";
-
-        let currentDiff = 'normal';
-        let highScores = { easy: 0, normal: 0, hard: 0 };
-
-        function loadHighScores() {
-            const saved = localStorage.getItem('money_puzzle_scores');
-            if (saved) highScores = JSON.parse(saved);
-            document.getElementById('best-scores-info').innerText = `BEST - \u304b\u3093\u305f\u3093:${highScores.easy} \u3075\u3064\u3046:${highScores.normal} \u3080\u305a\u304b\u3057\u3044:${highScores.hard}`;
-        }
-
-        function saveHighScore(diff, score) {
-            if (score > highScores[diff]) {
-                highScores[diff] = score;
-                localStorage.setItem('money_puzzle_scores', JSON.stringify(highScores));
-            }
-        }
-
-        document.getElementById('main-title').innerText = TXT_TITLE;
-        document.querySelector('.btn-easy').innerText = TXT_EASY;
-        document.querySelector('.btn-normal').innerText = TXT_NORMAL;
-        document.querySelector('.btn-hard').innerText = TXT_HARD;
-        document.querySelector('.btn-info').innerText = TXT_INFO;
-        document.getElementById('rule-title').innerText = TXT_RULE_TITLE;
-        document.getElementById('rule-text').innerHTML = TXT_RULE_BODY;
-        document.getElementById('diff-title').innerText = TXT_DIFF_TITLE;
-        document.getElementById('diff-text').innerHTML = TXT_DIFF_BODY;
-        document.querySelector('.btn-back').innerText = TXT_BACK;
-        document.getElementById('over-text').innerText = TXT_GAMEOVER;
-        document.getElementById('home-btn').innerText = TXT_HOME;
-        document.getElementById('home-btn-retry').innerText = TXT_HOME;
-        loadHighScores();
-
-        function showInfo() { document.getElementById('menu-screen').style.display = 'none'; document.getElementById('info-screen').style.display = 'flex'; }
-        function hideInfo() { document.getElementById('menu-screen').style.display = 'flex'; document.getElementById('info-screen').style.display = 'none'; }
-
         const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
         let engine, render, runner, canvas;
         let score = 0;
         let isGameOver = false;
         let nextCoinIndex = 0;
-        let gameWidth = 320;
-        let gameHeight = 400;
-        const LIMIT_Y = 60; // 判定ラインのY座標
+        let currentDiff = 'normal';
+        let highScores = { easy: 0, normal: 0, hard: 0 };
+        const LIMIT_Y = 60;
 
         const coinTypes = [
             { val: 1,   color: '#C0C0C0', radius: 15 },
@@ -163,25 +114,46 @@
             { val: 500, color: '#FFD700', radius: 35 }
         ];
 
-        function goHome() {
-            if (render) { Render.stop(render); Runner.stop(runner); Engine.clear(engine); render = null; runner = null; engine = null; }
-            const container = document.getElementById('game-container');
-            // 要素を維持しつつCanvasを削除
-            const oldCanvas = document.getElementById('gameCanvas');
-            if(oldCanvas) oldCanvas.remove();
+        function loadHighScores() {
+            const saved = localStorage.getItem('money_puzzle_scores');
+            if (saved) highScores = JSON.parse(saved);
+            document.getElementById('best-scores-info').innerText = `BEST - かんたん:${highScores.easy} ふつう:${highScores.normal} むずかしい:${highScores.hard}`;
+        }
+
+        function showInfo() { document.getElementById('menu-screen').style.display = 'none'; document.getElementById('info-screen').style.display = 'flex'; }
+        function hideInfo() { document.getElementById('menu-screen').style.display = 'flex'; document.getElementById('info-screen').style.display = 'none'; }
+
+        function cleanupGame() {
+            if (render) {
+                Render.stop(render);
+                Runner.stop(runner);
+                Engine.clear(engine);
+                if (canvas) canvas.remove();
+                render = null; runner = null; engine = null; canvas = null;
+            }
+            isGameOver = false;
+            score = 0;
+            document.getElementById('score-board').innerText = "SCORE: 0";
             document.getElementById('game-over').style.display = 'none';
+        }
+
+        function goHome() {
+            cleanupGame();
             document.getElementById('menu-screen').style.display = 'flex';
             document.getElementById('game-ui').style.display = 'none';
-            isGameOver = false; score = 0; 
-            document.getElementById('score-board').innerText = "SCORE: 0";
             loadHighScores();
         }
 
         function startGame(difficulty) {
+            cleanupGame(); // 開始前に確実に初期化
             currentDiff = difficulty;
+            
             const screenW = window.innerWidth;
             const screenH = window.innerHeight;
-            const maxGameHeight = screenH - 120; // 余裕を持たせる
+            const maxGameHeight = screenH - 125;
+
+            let gameWidth = 320;
+            let gameHeight = 400;
 
             if(difficulty === 'easy') { gameWidth = Math.min(screenW - 30, 380); gameHeight = Math.min(maxGameHeight, 500); }
             if(difficulty === 'normal') { gameWidth = Math.min(screenW - 50, 320); gameHeight = Math.min(maxGameHeight, 460); }
@@ -189,25 +161,27 @@
 
             document.getElementById('menu-screen').style.display = 'none';
             document.getElementById('game-ui').style.display = 'flex';
-            document.getElementById('high-score-board').innerText = "BEST: " + highScores[currentDiff];
-            initGame();
+            document.getElementById('high-score-board').innerText = "BEST: " + (highScores[currentDiff] || 0);
+            
+            initGame(gameWidth, gameHeight);
         }
 
-        function initGame() {
+        function initGame(w, h) {
             engine = Engine.create();
             canvas = document.createElement('canvas');
             canvas.id = 'gameCanvas';
-            canvas.width = gameWidth; canvas.height = gameHeight;
+            canvas.width = w; canvas.height = h;
             const container = document.getElementById('game-container');
             container.insertBefore(canvas, container.firstChild);
             
-            render = Render.create({ canvas: canvas, engine: engine, options: { width: gameWidth, height: gameHeight, wireframes: false, background: '#f8f9fa' } });
+            render = Render.create({ canvas: canvas, engine: engine, options: { width: w, height: h, wireframes: false, background: '#f8f9fa' } });
             
             const wallOpt = { isStatic: true, render: { fillStyle: '#444' } };
-            const ground = Bodies.rectangle(gameWidth/2, gameHeight+10, gameWidth, 40, wallOpt);
-            const leftWall = Bodies.rectangle(-10, gameHeight/2, 40, gameHeight, wallOpt);
-            const rightWall = Bodies.rectangle(gameWidth+10, gameHeight/2, 40, gameHeight, wallOpt);
-            Composite.add(engine.world, [ground, leftWall, rightWall]);
+            Composite.add(engine.world, [
+                Bodies.rectangle(w/2, h+10, w, 40, wallOpt),
+                Bodies.rectangle(-10, h/2, 40, h, wallOpt),
+                Bodies.rectangle(w+10, h/2, 40, h, wallOpt)
+            ]);
             
             nextCoinIndex = Math.floor(Math.random() * 3);
             updateNextCoinDisplay();
@@ -216,16 +190,15 @@
                 if (isGameOver) return;
                 e.preventDefault();
                 const rect = canvas.getBoundingClientRect();
-                const touchX = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-                const clampedX = Math.max(20, Math.min(gameWidth - 20, touchX));
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const touchX = clientX - rect.left;
+                const clampedX = Math.max(20, Math.min(w - 20, touchX));
                 
                 const type = coinTypes[nextCoinIndex];
-                // Y位置を判定ラインより上に設定
                 const coin = Bodies.circle(clampedX, 25, type.radius, { 
                     render: { fillStyle: type.color, strokeStyle: '#333', lineWidth: 2 }, 
                     label: nextCoinIndex.toString(), 
-                    restitution: 0.3,
-                    friction: 0.1
+                    restitution: 0.3
                 });
                 coin.createdAt = Date.now();
                 Composite.add(engine.world, coin);
@@ -260,6 +233,23 @@
                 });
             });
 
+            Events.on(engine, 'afterUpdate', () => {
+                if (isGameOver) return;
+                const now = Date.now();
+                Composite.allBodies(engine.world).forEach(body => {
+                    if (!body.isStatic && body.position.y < LIMIT_Y && (now - body.createdAt > 2000)) {
+                        isGameOver = true;
+                        if (score > highScores[currentDiff]) {
+                            highScores[currentDiff] = score;
+                            localStorage.setItem('money_puzzle_scores', JSON.stringify(highScores));
+                        }
+                        document.getElementById('final-score').innerText = "SCORE: " + score;
+                        document.getElementById('game-over').style.display = 'flex';
+                    }
+                });
+            });
+
+            // コインの穴を描画
             Events.on(render, 'afterRender', () => {
                 const ctx = render.context;
                 Composite.allBodies(engine.world).forEach(body => {
@@ -267,20 +257,6 @@
                     if (index === 1 || index === 3) {
                         ctx.beginPath(); ctx.arc(body.position.x, body.position.y, coinTypes[index].radius / 3, 0, Math.PI * 2);
                         ctx.fillStyle = '#f8f9fa'; ctx.fill(); ctx.stroke();
-                    }
-                });
-            });
-
-            Events.on(engine, 'afterUpdate', () => {
-                if (isGameOver) return;
-                const now = Date.now();
-                Composite.allBodies(engine.world).forEach(body => {
-                    // 生成から2秒以上経過していて、ラインを超えている場合にゲームオーバー
-                    if (!body.isStatic && body.position.y < LIMIT_Y && (now - body.createdAt > 2000)) {
-                        isGameOver = true;
-                        saveHighScore(currentDiff, score);
-                        document.getElementById('final-score').innerText = "SCORE: " + score;
-                        document.getElementById('game-over').style.display = 'flex';
                     }
                 });
             });
@@ -298,11 +274,13 @@
         }
 
         function showThousandYenEffect(x, y) {
-            const effect = document.createElement('div'); effect.innerText = TXT_CURRENCY; effect.className = 'thousand-yen-effect';
+            const effect = document.createElement('div'); effect.innerText = "1000円"; effect.className = 'thousand-yen-effect';
             const rect = canvas.getBoundingClientRect();
             effect.style.left = (rect.left + x - 30) + 'px'; effect.style.top = (rect.top + y - 20) + 'px';
             document.body.appendChild(effect); setTimeout(() => effect.remove(), 1000);
         }
+
+        loadHighScores();
     </script>
 </body>
 </html>
