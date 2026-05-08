@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>\u304a\u91d1\u5408\u4f53\u30d1\u30ba\u30eb</title>
+    <style>
+        body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f0f4f8; font-family: sans-serif; overflow: hidden; }
+        
+        #game-ui { display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+        
+        #home-btn { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 8px; background: #e74c3c; color: white; font-weight: bold; }
+        #home-btn:hover { background: #c0392b; }
+
+        #header { display: flex; align-items: center; gap: 20px; background: white; padding: 10px 20px; border-radius: 10px; border: 2px solid #ccc; }
+        #score-board { font-size: 20px; font-weight: bold; color: #333; }
+        #next-container { font-size: 16px; color: #555; display: flex; align-items: center; gap: 5px; }
+        #nextCanvas { width: 40px; height: 40px; border: 1px solid #ccc; background: white; border-radius: 5px; }
+        
+        #game-container { position: relative; border: 4px solid #333; border-radius: 8px; overflow: hidden; }
+        #gameCanvas { display: block; background: #fff; touch-action: none; }
+        
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 8px; padding: 20px; box-sizing: border-box; }
+        
+        #menu-screen { display: flex; }
+        #game-over { display: none; }
+        #info-screen { display: none; text-align: center; }
+        
+        h1 { font-size: 28px; color: #2c3e50; margin-bottom: 20px; text-align: center; }
+        h2 { color: #2c3e50; margin-top: 15px; margin-bottom: 5px; font-size: 20px; }
+        p { font-size: 15px; color: #555; line-height: 1.6; margin: 5px 0; }
+        
+        .btn { padding: 12px 24px; margin: 8px; font-size: 18px; font-weight: bold; cursor: pointer; border: none; border-radius: 25px; color: white; transition: transform 0.2s; width: 220px; text-align: center; }
+        .btn:hover { transform: scale(1.05); }
+        .btn-easy { background: #2ecc71; }
+        .btn-normal { background: #3498db; }
+        .btn-hard { background: #e74c3c; }
+        .btn-info { background: #f1c40f; color: #333; }
+        .btn-back { background: #95a5a6; }
+
+        .thousand-yen-effect { position: absolute; font-size: 24px; font-weight: bold; color: #e67e22; pointer-events: none; animation: fadeUp 1s ease-out forwards; z-index: 100; }
+        @keyframes fadeUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-50px); } }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+</head>
+<body>
+
+    <div id="menu-screen" class="overlay">
+        <h1 id="main-title"></h1>
+        <button class="btn btn-info" onclick="showInfo()"></button>
+        <button class="btn btn-easy" onclick="startGame('easy')"></button>
+        <button class="btn btn-normal" onclick="startGame('normal')"></button>
+        <button class="btn btn-hard" onclick="startGame('hard')"></button>
+    </div>
+
+    <div id="info-screen" class="overlay">
+        <h2 id="rule-title"></h2>
+        <p id="rule-text" style="text-align: center;"></p>
+        <h2 id="diff-title"></h2>
+        <p id="diff-text" style="text-align: center;"></p>
+        <button class="btn btn-back" onclick="hideInfo()"></button>
+    </div>
+
+    <div id="game-ui">
+        <button id="home-btn" onclick="goHome()"></button>
+        <div id="header">
+            <div id="score-board">SCORE: 0</div>
+            <div id="next-container">
+                NEXT: <canvas id="nextCanvas" width="40" height="40"></canvas>
+            </div>
+        </div>
+        <div id="game-container">
+            <div id="game-over" class="overlay">
+                <h2 id="over-text" style="color:red; font-size:32px; white-space:nowrap;"></h2>
+                <button class="btn btn-normal" onclick="goHome()" id="home-btn-retry"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TXT_TITLE = "\u304a\u91d1\u5408\u4f53\u30d1\u30ba\u30eb";
+        const TXT_EASY = "\u304b\u3093\u305f\u3093";
+        const TXT_NORMAL = "\u3075\u3064\u3046";
+        const TXT_HARD = "\u3080\u305a\u304b\u3057\u3044";
+        const TXT_INFO = "\u305b\u3064\u3081\u3044";
+        const TXT_BACK = "\u623b\u308b";
+        const TXT_GAMEOVER = "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc";
+        const TXT_HOME = "\u30db\u30fc\u30e0\u306b\u623b\u308b";
+        const TXT_RULE_TITLE = "\u30eb\u30fc\u30eb";
+        const TXT_DIFF_TITLE = "\u96e3\u6613\u5ea6";
+
+        // ご指定通りの改行を含むテキスト
+        const TXT_RULE_BODY = "\u786c\u8ca8\u3092\u843d\u3068\u3057\u3066\u5408\u4f53\u3055\u305b\u308b\u30d1\u30ba\u30eb\u3067\u3059\u3002\u540c\u3058\u786c\u8ca8\u304c\u304f\u3063\u3064\u304f\u3068\u5408\u4f53\u3057\u307e\u3059\u3002<br>500\u5186\u7389\u306f\u6d88\u3048\u30661000\u70b9\uff01";
+        const TXT_DIFF_BODY = "\u304b\u3093\u305f\u3093\uff1a\u8caf\u91d1\u7bb1\u304c\u5e83\u304f\u7c21\u5358\u3002<br>\u3075\u3064\u3046\uff1a\u8caf\u91d1\u7bb1\u304c\u6a19\u6e96\u306e\u5927\u304d\u3055\u3067\u3059\u3002<br>\u3080\u305a\u304b\u3057\u3044\uff1a\u8caf\u91d1\u7bb1\u304c\u72ed\u304f\u3001\u96e3\u3057\u3044\u3002";
+        const TXT_CURRENCY = "1000\u5186";
+
+        document.getElementById('main-title').innerText = TXT_TITLE;
+        document.querySelector('.btn-easy').innerText = TXT_EASY;
+        document.querySelector('.btn-normal').innerText = TXT_NORMAL;
+        document.querySelector('.btn-hard').innerText = TXT_HARD;
+        document.querySelector('.btn-info').innerText = TXT_INFO;
+        document.getElementById('rule-title').innerText = TXT_RULE_TITLE;
+        document.getElementById('rule-text').innerHTML = TXT_RULE_BODY; // innerHTMLで改行を有効化
+        document.getElementById('diff-title').innerText = TXT_DIFF_TITLE;
+        document.getElementById('diff-text').innerHTML = TXT_DIFF_BODY; // innerHTMLで改行を有効化
+        document.querySelector('.btn-back').innerText = TXT_BACK;
+        document.getElementById('over-text').innerText = TXT_GAMEOVER;
+        document.getElementById('home-btn').innerText = TXT_HOME;
+        document.getElementById('home-btn-retry').innerText = TXT_HOME;
+
+        function showInfo() { document.getElementById('menu-screen').style.display = 'none'; document.getElementById('info-screen').style.display = 'flex'; }
+        function hideInfo() { document.getElementById('menu-screen').style.display = 'flex'; document.getElementById('info-screen').style.display = 'none'; }
+
+        const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
+        let engine, render, runner, canvas;
+        let score = 0;
+        let isGameOver = false;
+        let nextCoinIndex = 0;
+        let gameWidth = 320;
+        let gameHeight = 480;
+
+        const coinTypes = [
+            { val: 1,   color: '#C0C0C0', radius: 18 },
+            { val: 5,   color: '#FFD700', radius: 22 },
+            { val: 10,  color: '#B87333', radius: 26 },
+            { val: 50,  color: '#E0E0E0', radius: 30 },
+            { val: 100, color: '#C0C0C0', radius: 34 },
+            { val: 500, color: '#FFD700', radius: 38 }
+        ];
+
+        function goHome() {
+            if (render) { Render.stop(render); Runner.stop(runner); Engine.clear(engine); render = null; runner = null; engine = null; }
+            const container = document.getElementById('game-container');
+            container.innerHTML = `<div id="game-over" class="overlay"><h2 id="over-text" style="color:red; font-size:32px; white-space:nowrap;">${TXT_GAMEOVER}</h2><button class="btn btn-normal" onclick="goHome()" id="home-btn-retry">${TXT_HOME}</button></div>`;
+            document.getElementById('menu-screen').style.display = 'flex';
+            document.getElementById('game-ui').style.display = 'none';
+            isGameOver = false; score = 0; document.getElementById('score-board').innerText = "SCORE: 0";
+        }
+
+        function getNextCoinIndex() { const rand = Math.random() * 100; if (rand < 30) return 0; if (rand < 60) return 1; if (rand < 90) return 2; if (rand < 96) return 3; if (rand < 99) return 4; return 5; }
+
+        function updateNextCoinDisplay() {
+            const nextCtx = document.getElementById('nextCanvas').getContext('2d');
+            const coin = coinTypes[nextCoinIndex];
+            nextCtx.clearRect(0, 0, 40, 40);
+            nextCtx.beginPath(); nextCtx.arc(20, 20, coin.radius / 1.8, 0, Math.PI * 2); nextCtx.fillStyle = coin.color; nextCtx.fill(); nextCtx.strokeStyle = "#333"; nextCtx.stroke();
+            if (nextCoinIndex === 1 || nextCoinIndex === 3) { nextCtx.beginPath(); nextCtx.arc(20, 20, coin.radius / 5, 0, Math.PI * 2); nextCtx.fillStyle = '#fff'; nextCtx.fill(); }
+        }
+
+        function startGame(difficulty) {
+            if(difficulty === 'easy') { gameWidth = 420; gameHeight = 480; }
+            if(difficulty === 'normal') { gameWidth = 320; gameHeight = 480; }
+            if(difficulty === 'hard') { gameWidth = 220; gameHeight = 360; }
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('game-ui').style.display = 'flex';
+            initGame();
+        }
+
+        function initGame() {
+            engine = Engine.create();
+            canvas = document.createElement('canvas');
+            canvas.id = 'gameCanvas';
+            canvas.width = gameWidth; canvas.height = gameHeight;
+            const container = document.getElementById('game-container');
+            container.insertBefore(canvas, container.firstChild);
+            render = Render.create({ canvas: canvas, engine: engine, options: { width: gameWidth, height: gameHeight, wireframes: false, background: '#f8f9fa' } });
+            const ground = Bodies.rectangle(gameWidth/2, gameHeight, gameWidth, 20, { isStatic: true, label: 'wall' });
+            const leftWall = Bodies.rectangle(0, gameHeight/2, 20, gameHeight, { isStatic: true, label: 'wall' });
+            const rightWall = Bodies.rectangle(gameWidth, gameHeight/2, 20, gameHeight, { isStatic: true, label: 'wall' });
+            Composite.add(engine.world, [ground, leftWall, rightWall]);
+            nextCoinIndex = getNextCoinIndex(); updateNextCoinDisplay();
+            canvas.addEventListener('pointerdown', (e) => {
+                if (isGameOver) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const clampedX = Math.max(40, Math.min(gameWidth - 40, x));
+                const type = coinTypes[nextCoinIndex];
+                const coin = Bodies.circle(clampedX, 30, type.radius, { render: { fillStyle: type.color, strokeStyle: '#333', lineWidth: 2 }, label: nextCoinIndex.toString(), restitution: 0.6 });
+                coin.createdAt = Date.now(); Composite.add(engine.world, coin);
+                nextCoinIndex = getNextCoinIndex(); updateNextCoinDisplay();
+            });
+            Events.on(engine, 'collisionStart', (event) => {
+                event.pairs.forEach(pair => {
+                    const { bodyA, bodyB } = pair;
+                    if (bodyA.label === bodyB.label && bodyA.label !== "wall" && bodyA.label !== "processing") {
+                        const index = parseInt(bodyA.label);
+                        const pos = { x: bodyA.position.x, y: bodyA.position.y };
+                        bodyA.label = "processing"; bodyB.label = "processing"; Composite.remove(engine.world, [bodyA, bodyB]);
+                        if (index < coinTypes.length - 1) {
+                            const nextType = coinTypes[index + 1];
+                            const newCoin = Bodies.circle(pos.x, pos.y, nextType.radius, { render: { fillStyle: nextType.color, strokeStyle: '#333', lineWidth: 2 }, label: (index + 1).toString(), restitution: 0.6 });
+                            newCoin.createdAt = Date.now(); Composite.add(engine.world, newCoin);
+                            score += 10;
+                        } else { showThousandYenEffect(pos.x, pos.y); score += 1000; }
+                        document.getElementById('score-board').innerText = "SCORE: " + score;
+                    }
+                });
+            });
+            Events.on(render, 'afterRender', () => {
+                const ctx = render.context;
+                Composite.allBodies(engine.world).forEach(body => {
+                    const index = parseInt(body.label);
+                    if (index === 1 || index === 3) { ctx.beginPath(); ctx.arc(body.position.x, body.position.y, coinTypes[index].radius / 3, 0, Math.PI * 2); ctx.fillStyle = '#f8f9fa'; ctx.fill(); ctx.stroke(); }
+                });
+            });
+            Events.on(engine, 'afterUpdate', () => {
+                if (isGameOver) return;
+                const now = Date.now();
+                Composite.allBodies(engine.world).forEach(body => {
+                    if (body.label !== "wall" && body.label !== "processing" && body.position.y < (gameHeight * 0.15) && (now - body.createdAt > 1000)) {
+                        isGameOver = true; document.getElementById('game-over').style.display = 'flex';
+                    }
+                });
+            });
+            Render.run(render); runner = Runner.create(); Runner.run(runner, engine);
+        }
+        function showThousandYenEffect(x, y) {
+            const effect = document.createElement('div'); effect.innerText = TXT_CURRENCY; effect.className = 'thousand-yen-effect';
+            const container = document.getElementById('game-container');
+            const rect = container.getBoundingClientRect();
+            effect.style.left = (rect.left + x - 30) + 'px'; effect.style.top = (rect.top + y - 20) + 'px';
+            document.body.appendChild(effect); setTimeout(() => effect.remove(), 1000);
+        }
+    </script>
+</body>
+</html>
