@@ -8,12 +8,14 @@
         * { box-sizing: border-box; touch-action: manipulation; }
         body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #f0f4f8; font-family: sans-serif; overflow: hidden; }
         
-        /* タイトル画面の背景装飾 */
+        /* タイトル画面の背景装飾（文字化け対策：図形で描画） */
         #menu-screen { background: radial-gradient(circle, #fff 0%, #dcdde1 100%); }
-        .coin-deco { position: absolute; font-size: 40px; opacity: 0.1; z-index: -1; pointer-events: none; }
+        .coin-deco { position: absolute; border-radius: 50%; border: 2px solid #000; opacity: 0.1; z-index: -1; pointer-events: none; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .deco-gold { background: #FFD700; width: 60px; height: 60px; }
+        .deco-silver { background: #C0C0C0; width: 50px; height: 50px; }
+        .deco-copper { background: #B87333; width: 45px; height: 45px; }
 
         #game-ui { display: none; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 500px; padding: 10px; }
-        
         #home-btn { padding: 8px 16px; font-size: 14px; cursor: pointer; border: none; border-radius: 8px; background: #e74c3c; color: white; font-weight: bold; }
 
         #header { display: flex; flex-direction: column; align-items: center; background: white; padding: 10px; border-radius: 10px; border: 2px solid #ccc; width: 95%; gap: 5px; }
@@ -59,10 +61,12 @@
         <button class="btn btn-easy" onclick="startGame('easy')"></button>
         <button class="btn btn-normal" onclick="startGame('normal')"></button>
         <button class="btn btn-hard" onclick="startGame('hard')"></button>
-        <div class="coin-deco" style="top:10%; left:10%;">\uffe5</div>
-        <div class="coin-deco" style="top:20%; right:15%;">\u2464</div>
-        <div class="coin-deco" style="bottom:15%; left:20%;">\u2460</div>
-        <div class="coin-deco" style="bottom:25%; right:10%;">\u2469</div>
+        
+        <div class="coin-deco deco-gold" style="top:10%; left:10%;">500</div>
+        <div class="coin-deco deco-silver" style="top:25%; right:10%;">100</div>
+        <div class="coin-deco deco-copper" style="bottom:15%; left:15%;">10</div>
+        <div class="coin-deco deco-gold" style="bottom:25%; right:20%;">5</div>
+        <div class="coin-deco deco-silver" style="top:50%; left:5%;">1</div>
     </div>
 
     <div id="info-screen" class="overlay">
@@ -111,7 +115,6 @@
         let currentDiff = 'normal';
         let highScores = { easy: 0, normal: 0, hard: 0 };
 
-        // ハイスコア読み込み
         function loadHighScores() {
             const saved = localStorage.getItem('money_puzzle_scores');
             if (saved) highScores = JSON.parse(saved);
