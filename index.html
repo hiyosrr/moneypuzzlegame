@@ -15,19 +15,21 @@
         .deco-copper { background: #B87333; width: 45px; height: 45px; }
 
         #game-ui { display: none; flex-direction: column; align-items: center; gap: 5px; width: 100%; height: 100vh; padding: 5px; }
-        #home-btn { padding: 5px 12px; font-size: 12px; cursor: pointer; border: none; border-radius: 5px; background: #e74c3c; color: white; font-weight: bold; align-self: flex-start; }
+        #home-btn { padding: 6px 14px; font-size: 13px; cursor: pointer; border: none; border-radius: 5px; background: #e74c3c; color: white; font-weight: bold; align-self: flex-start; z-index: 50; }
 
-        /* ヘッダーを横長にコンパクト化 */
-        #header { display: flex; align-items: center; justify-content: space-between; background: white; padding: 5px 10px; border-radius: 8px; border: 2px solid #ccc; width: 100%; max-width: 400px; }
+        #header { display: flex; align-items: center; justify-content: space-between; background: white; padding: 6px 12px; border-radius: 8px; border: 2px solid #ccc; width: 100%; max-width: 400px; }
         .score-info { display: flex; flex-direction: column; gap: 2px; }
         #score-board { font-size: 16px; font-weight: bold; color: #2c3e50; }
         #high-score-board { font-size: 11px; color: #7f8c8d; }
         #next-container { font-size: 12px; color: #555; display: flex; align-items: center; gap: 5px; }
-        #nextCanvas { width: 30px; height: 30px; border: 1px solid #ccc; background: white; border-radius: 50%; }
+        #nextCanvas { width: 32px; height: 32px; border: 1px solid #ccc; background: white; border-radius: 50%; }
         
-        #game-container { position: relative; border: 4px solid #333; border-radius: 8px; overflow: hidden; background: #fff; width: fit-content; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 5px; }
+        #game-container { position: relative; border: 4px solid #333; border-radius: 8px; overflow: hidden; background: #fff; width: fit-content; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-top: 5px; }
         #gameCanvas { display: block; touch-action: none; }
         
+        /* ゲームオーバー判定ライン */
+        #limit-line { position: absolute; top: 60px; left: 0; width: 100%; height: 2px; border-top: 2px dashed rgba(255,0,0,0.3); pointer-events: none; z-index: 1; }
+
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
         
         #menu-screen { position: fixed; width: 100%; height: 100%; z-index: 20; }
@@ -81,10 +83,11 @@
                 <div id="high-score-board">BEST: 0</div>
             </div>
             <div id="next-container">
-                NEXT: <canvas id="nextCanvas" width="30" height="30"></canvas>
+                NEXT: <canvas id="nextCanvas" width="32" height="32"></canvas>
             </div>
         </div>
         <div id="game-container">
+            <div id="limit-line"></div>
             <div id="game-over" class="overlay">
                 <h2 id="over-text" style="color:red; font-size:24px; white-space:nowrap; margin:0;"></h2>
                 <div id="final-score" style="font-weight:bold; margin:10px 0;"></div>
@@ -149,6 +152,7 @@
         let nextCoinIndex = 0;
         let gameWidth = 320;
         let gameHeight = 400;
+        const LIMIT_Y = 60; // 判定ラインのY座標
 
         const coinTypes = [
             { val: 1,   color: '#C0C0C0', radius: 15 },
@@ -162,7 +166,10 @@
         function goHome() {
             if (render) { Render.stop(render); Runner.stop(runner); Engine.clear(engine); render = null; runner = null; engine = null; }
             const container = document.getElementById('game-container');
-            container.innerHTML = `<div id="game-over" class="overlay"><h2 id="over-text" style="color:red; font-size:24px; white-space:nowrap; margin:0;">${TXT_GAMEOVER}</h2><div id="final-score" style="font-weight:bold; margin:10px 0;"></div><button class="btn btn-normal" onclick="goHome()" id="home-btn-retry">${TXT_HOME}</button></div>`;
+            // 要素を維持しつつCanvasを削除
+            const oldCanvas = document.getElementById('gameCanvas');
+            if(oldCanvas) oldCanvas.remove();
+            document.getElementById('game-over').style.display = 'none';
             document.getElementById('menu-screen').style.display = 'flex';
             document.getElementById('game-ui').style.display = 'none';
             isGameOver = false; score = 0; 
@@ -174,9 +181,7 @@
             currentDiff = difficulty;
             const screenW = window.innerWidth;
             const screenH = window.innerHeight;
-            
-            // 画面の高さからヘッダーと余白（約120px）を引いた値を最大高さにする
-            const maxGameHeight = screenH - 110;
+            const maxGameHeight = screenH - 120; // 余裕を持たせる
 
             if(difficulty === 'easy') { gameWidth = Math.min(screenW - 30, 380); gameHeight = Math.min(maxGameHeight, 500); }
             if(difficulty === 'normal') { gameWidth = Math.min(screenW - 50, 320); gameHeight = Math.min(maxGameHeight, 460); }
@@ -215,7 +220,13 @@
                 const clampedX = Math.max(20, Math.min(gameWidth - 20, touchX));
                 
                 const type = coinTypes[nextCoinIndex];
-                const coin = Bodies.circle(clampedX, 30, type.radius, { render: { fillStyle: type.color, strokeStyle: '#333', lineWidth: 2 }, label: nextCoinIndex.toString(), restitution: 0.4 });
+                // Y位置を判定ラインより上に設定
+                const coin = Bodies.circle(clampedX, 25, type.radius, { 
+                    render: { fillStyle: type.color, strokeStyle: '#333', lineWidth: 2 }, 
+                    label: nextCoinIndex.toString(), 
+                    restitution: 0.3,
+                    friction: 0.1
+                });
                 coin.createdAt = Date.now();
                 Composite.add(engine.world, coin);
 
@@ -229,17 +240,20 @@
             Events.on(engine, 'collisionStart', (event) => {
                 event.pairs.forEach(pair => {
                     const { bodyA, bodyB } = pair;
-                    if (bodyA.label === bodyB.label && bodyA.label !== "default" && bodyA.label !== "processing") {
+                    if (bodyA.label === bodyB.label && bodyA.label !== "default" && bodyA.label !== "processing" && !bodyA.isStatic && !bodyB.isStatic) {
                         const index = parseInt(bodyA.label);
                         const pos = { x: (bodyA.position.x + bodyB.position.x)/2, y: (bodyA.position.y + bodyB.position.y)/2 };
                         bodyA.label = "processing"; bodyB.label = "processing";
                         Composite.remove(engine.world, [bodyA, bodyB]);
                         if (index < coinTypes.length - 1) {
                             const nextType = coinTypes[index + 1];
-                            const newCoin = Bodies.circle(pos.x, pos.y, nextType.radius, { render: { fillStyle: nextType.color, strokeStyle: '#333', lineWidth: 2 }, label: (index + 1).toString(), restitution: 0.4 });
+                            const newCoin = Bodies.circle(pos.x, pos.y, nextType.radius, { 
+                                render: { fillStyle: nextType.color, strokeStyle: '#333', lineWidth: 2 }, 
+                                label: (index + 1).toString(), restitution: 0.3 
+                            });
                             newCoin.createdAt = Date.now();
                             Composite.add(engine.world, newCoin);
-                            score += (index + 1) * 2;
+                            score += (index + 1) * 5;
                         } else { showThousandYenEffect(pos.x, pos.y); score += 1000; }
                         document.getElementById('score-board').innerText = "SCORE: " + score;
                     }
@@ -261,7 +275,8 @@
                 if (isGameOver) return;
                 const now = Date.now();
                 Composite.allBodies(engine.world).forEach(body => {
-                    if (body.position.y < 60 && (now - body.createdAt > 1500) && !body.isStatic) {
+                    // 生成から2秒以上経過していて、ラインを超えている場合にゲームオーバー
+                    if (!body.isStatic && body.position.y < LIMIT_Y && (now - body.createdAt > 2000)) {
                         isGameOver = true;
                         saveHighScore(currentDiff, score);
                         document.getElementById('final-score').innerText = "SCORE: " + score;
@@ -278,8 +293,8 @@
         function updateNextCoinDisplay() {
             const nextCtx = document.getElementById('nextCanvas').getContext('2d');
             const coin = coinTypes[nextCoinIndex];
-            nextCtx.clearRect(0, 0, 40, 40);
-            nextCtx.beginPath(); nextCtx.arc(15, 15, coin.radius / 2.2, 0, Math.PI * 2); nextCtx.fillStyle = coin.color; nextCtx.fill(); nextCtx.strokeStyle = "#333"; nextCtx.stroke();
+            nextCtx.clearRect(0, 0, 32, 32);
+            nextCtx.beginPath(); nextCtx.arc(16, 16, coin.radius / 2.2, 0, Math.PI * 2); nextCtx.fillStyle = coin.color; nextCtx.fill(); nextCtx.strokeStyle = "#333"; nextCtx.stroke();
         }
 
         function showThousandYenEffect(x, y) {
