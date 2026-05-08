@@ -8,46 +8,42 @@
         * { box-sizing: border-box; touch-action: manipulation; }
         body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #f0f4f8; font-family: sans-serif; overflow: hidden; }
         
-        /* タイトル画面の背景装飾（文字化け対策：図形で描画） */
         #menu-screen { background: radial-gradient(circle, #fff 0%, #dcdde1 100%); }
         .coin-deco { position: absolute; border-radius: 50%; border: 2px solid #000; opacity: 0.1; z-index: -1; pointer-events: none; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         .deco-gold { background: #FFD700; width: 60px; height: 60px; }
         .deco-silver { background: #C0C0C0; width: 50px; height: 50px; }
         .deco-copper { background: #B87333; width: 45px; height: 45px; }
 
-        #game-ui { display: none; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 500px; padding: 10px; }
-        #home-btn { padding: 8px 16px; font-size: 14px; cursor: pointer; border: none; border-radius: 8px; background: #e74c3c; color: white; font-weight: bold; }
+        #game-ui { display: none; flex-direction: column; align-items: center; gap: 5px; width: 100%; height: 100vh; padding: 5px; }
+        #home-btn { padding: 5px 12px; font-size: 12px; cursor: pointer; border: none; border-radius: 5px; background: #e74c3c; color: white; font-weight: bold; align-self: flex-start; }
 
-        #header { display: flex; flex-direction: column; align-items: center; background: white; padding: 10px; border-radius: 10px; border: 2px solid #ccc; width: 95%; gap: 5px; }
-        .info-row { display: flex; width: 100%; justify-content: space-around; align-items: center; }
-        #score-board { font-size: 18px; font-weight: bold; color: #2c3e50; }
-        #high-score-board { font-size: 14px; color: #7f8c8d; }
-        #next-container { font-size: 14px; color: #555; display: flex; align-items: center; gap: 5px; }
-        #nextCanvas { width: 34px; height: 34px; border: 1px solid #ccc; background: white; border-radius: 50%; }
+        /* ヘッダーを横長にコンパクト化 */
+        #header { display: flex; align-items: center; justify-content: space-between; background: white; padding: 5px 10px; border-radius: 8px; border: 2px solid #ccc; width: 100%; max-width: 400px; }
+        .score-info { display: flex; flex-direction: column; gap: 2px; }
+        #score-board { font-size: 16px; font-weight: bold; color: #2c3e50; }
+        #high-score-board { font-size: 11px; color: #7f8c8d; }
+        #next-container { font-size: 12px; color: #555; display: flex; align-items: center; gap: 5px; }
+        #nextCanvas { width: 30px; height: 30px; border: 1px solid #ccc; background: white; border-radius: 50%; }
         
-        #game-container { position: relative; border: 4px solid #333; border-radius: 8px; overflow: hidden; background: #fff; width: fit-content; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        #gameCanvas { display: block; touch-action: none; max-width: 100vw; max-height: 65vh; }
+        #game-container { position: relative; border: 4px solid #333; border-radius: 8px; overflow: hidden; background: #fff; width: fit-content; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 5px; }
+        #gameCanvas { display: block; touch-action: none; }
         
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
         
         #menu-screen { position: fixed; width: 100%; height: 100%; z-index: 20; }
-        #game-over { display: none; }
         #info-screen { display: none; text-align: center; position: fixed; width: 100%; height: 100%; z-index: 30; }
         
-        h1 { font-size: 32px; color: #2c3e50; margin-bottom: 5px; text-align: center; text-shadow: 2px 2px #fff; }
-        .high-score-list { font-size: 14px; color: #7f8c8d; margin-bottom: 20px; }
-        h2 { color: #2c3e50; margin-top: 15px; margin-bottom: 5px; font-size: 18px; }
-        p { font-size: 14px; color: #555; line-height: 1.5; margin: 4px 0; }
+        h1 { font-size: 28px; color: #2c3e50; margin: 0 0 10px 0; text-align: center; }
+        .high-score-list { font-size: 13px; color: #7f8c8d; margin-bottom: 15px; }
         
-        .btn { padding: 12px; margin: 6px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; border-radius: 25px; color: white; width: 85%; max-width: 260px; text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
-        .btn:active { transform: translateY(2px); box-shadow: none; }
+        .btn { padding: 10px; margin: 5px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; border-radius: 25px; color: white; width: 80%; max-width: 240px; text-align: center; }
         .btn-easy { background: #2ecc71; }
         .btn-normal { background: #3498db; }
         .btn-hard { background: #e74c3c; }
         .btn-info { background: #f1c40f; color: #333; }
         .btn-back { background: #95a5a6; }
 
-        .thousand-yen-effect { position: absolute; font-size: 24px; font-weight: bold; color: #e67e22; pointer-events: none; animation: fadeUp 1s ease-out forwards; z-index: 100; text-shadow: 1px 1px #fff; }
+        .thousand-yen-effect { position: absolute; font-size: 22px; font-weight: bold; color: #e67e22; pointer-events: none; animation: fadeUp 1s ease-out forwards; z-index: 100; text-shadow: 1px 1px #fff; }
         @keyframes fadeUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-40px); } }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
@@ -80,18 +76,18 @@
     <div id="game-ui">
         <button id="home-btn" onclick="goHome()"></button>
         <div id="header">
-            <div class="info-row">
+            <div class="score-info">
                 <div id="score-board">SCORE: 0</div>
                 <div id="high-score-board">BEST: 0</div>
             </div>
             <div id="next-container">
-                NEXT: <canvas id="nextCanvas" width="40" height="40"></canvas>
+                NEXT: <canvas id="nextCanvas" width="30" height="30"></canvas>
             </div>
         </div>
         <div id="game-container">
             <div id="game-over" class="overlay">
-                <h2 id="over-text" style="color:red; font-size:28px; white-space:nowrap;"></h2>
-                <div id="final-score" style="font-weight:bold; margin-bottom:10px;"></div>
+                <h2 id="over-text" style="color:red; font-size:24px; white-space:nowrap; margin:0;"></h2>
+                <div id="final-score" style="font-weight:bold; margin:10px 0;"></div>
                 <button class="btn btn-normal" onclick="goHome()" id="home-btn-retry"></button>
             </div>
         </div>
@@ -152,21 +148,21 @@
         let isGameOver = false;
         let nextCoinIndex = 0;
         let gameWidth = 320;
-        let gameHeight = 440;
+        let gameHeight = 400;
 
         const coinTypes = [
-            { val: 1,   color: '#C0C0C0', radius: 16 },
-            { val: 5,   color: '#FFD700', radius: 20 },
-            { val: 10,  color: '#B87333', radius: 24 },
-            { val: 50,  color: '#E0E0E0', radius: 28 },
-            { val: 100, color: '#C0C0C0', radius: 32 },
-            { val: 500, color: '#FFD700', radius: 36 }
+            { val: 1,   color: '#C0C0C0', radius: 15 },
+            { val: 5,   color: '#FFD700', radius: 19 },
+            { val: 10,  color: '#B87333', radius: 23 },
+            { val: 50,  color: '#E0E0E0', radius: 27 },
+            { val: 100, color: '#C0C0C0', radius: 31 },
+            { val: 500, color: '#FFD700', radius: 35 }
         ];
 
         function goHome() {
             if (render) { Render.stop(render); Runner.stop(runner); Engine.clear(engine); render = null; runner = null; engine = null; }
             const container = document.getElementById('game-container');
-            container.innerHTML = `<div id="game-over" class="overlay"><h2 id="over-text" style="color:red; font-size:28px; white-space:nowrap;">${TXT_GAMEOVER}</h2><div id="final-score" style="font-weight:bold; margin-bottom:10px;"></div><button class="btn btn-normal" onclick="goHome()" id="home-btn-retry">${TXT_HOME}</button></div>`;
+            container.innerHTML = `<div id="game-over" class="overlay"><h2 id="over-text" style="color:red; font-size:24px; white-space:nowrap; margin:0;">${TXT_GAMEOVER}</h2><div id="final-score" style="font-weight:bold; margin:10px 0;"></div><button class="btn btn-normal" onclick="goHome()" id="home-btn-retry">${TXT_HOME}</button></div>`;
             document.getElementById('menu-screen').style.display = 'flex';
             document.getElementById('game-ui').style.display = 'none';
             isGameOver = false; score = 0; 
@@ -177,9 +173,14 @@
         function startGame(difficulty) {
             currentDiff = difficulty;
             const screenW = window.innerWidth;
-            if(difficulty === 'easy') { gameWidth = Math.min(screenW - 40, 400); gameHeight = 460; }
-            if(difficulty === 'normal') { gameWidth = Math.min(screenW - 60, 320); gameHeight = 460; }
-            if(difficulty === 'hard') { gameWidth = Math.min(screenW - 80, 240); gameHeight = 400; }
+            const screenH = window.innerHeight;
+            
+            // 画面の高さからヘッダーと余白（約120px）を引いた値を最大高さにする
+            const maxGameHeight = screenH - 110;
+
+            if(difficulty === 'easy') { gameWidth = Math.min(screenW - 30, 380); gameHeight = Math.min(maxGameHeight, 500); }
+            if(difficulty === 'normal') { gameWidth = Math.min(screenW - 50, 320); gameHeight = Math.min(maxGameHeight, 460); }
+            if(difficulty === 'hard') { gameWidth = Math.min(screenW - 80, 240); gameHeight = Math.min(maxGameHeight, 400); }
 
             document.getElementById('menu-screen').style.display = 'none';
             document.getElementById('game-ui').style.display = 'flex';
@@ -278,7 +279,7 @@
             const nextCtx = document.getElementById('nextCanvas').getContext('2d');
             const coin = coinTypes[nextCoinIndex];
             nextCtx.clearRect(0, 0, 40, 40);
-            nextCtx.beginPath(); nextCtx.arc(20, 20, coin.radius / 1.8, 0, Math.PI * 2); nextCtx.fillStyle = coin.color; nextCtx.fill(); nextCtx.strokeStyle = "#333"; nextCtx.stroke();
+            nextCtx.beginPath(); nextCtx.arc(15, 15, coin.radius / 2.2, 0, Math.PI * 2); nextCtx.fillStyle = coin.color; nextCtx.fill(); nextCtx.strokeStyle = "#333"; nextCtx.stroke();
         }
 
         function showThousandYenEffect(x, y) {
