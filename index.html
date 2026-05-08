@@ -8,36 +8,44 @@
         * { box-sizing: border-box; touch-action: manipulation; }
         body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #f0f4f8; font-family: sans-serif; overflow: hidden; }
         
+        /* タイトル画面の背景装飾 */
+        #menu-screen { background: radial-gradient(circle, #fff 0%, #dcdde1 100%); }
+        .coin-deco { position: absolute; font-size: 40px; opacity: 0.1; z-index: -1; pointer-events: none; }
+
         #game-ui { display: none; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 500px; padding: 10px; }
         
         #home-btn { padding: 8px 16px; font-size: 14px; cursor: pointer; border: none; border-radius: 8px; background: #e74c3c; color: white; font-weight: bold; }
 
-        #header { display: flex; align-items: center; gap: 15px; background: white; padding: 8px 15px; border-radius: 10px; border: 2px solid #ccc; width: 90%; justify-content: center; }
-        #score-board { font-size: 18px; font-weight: bold; color: #333; }
+        #header { display: flex; flex-direction: column; align-items: center; background: white; padding: 10px; border-radius: 10px; border: 2px solid #ccc; width: 95%; gap: 5px; }
+        .info-row { display: flex; width: 100%; justify-content: space-around; align-items: center; }
+        #score-board { font-size: 18px; font-weight: bold; color: #2c3e50; }
+        #high-score-board { font-size: 14px; color: #7f8c8d; }
         #next-container { font-size: 14px; color: #555; display: flex; align-items: center; gap: 5px; }
-        #nextCanvas { width: 34px; height: 34px; border: 1px solid #ccc; background: white; border-radius: 5px; }
+        #nextCanvas { width: 34px; height: 34px; border: 1px solid #ccc; background: white; border-radius: 50%; }
         
-        #game-container { position: relative; border: 4px solid #333; border-radius: 8px; overflow: hidden; background: #fff; width: fit-content; }
-        #gameCanvas { display: block; touch-action: none; max-width: 100vw; max-height: 70vh; }
+        #game-container { position: relative; border: 4px solid #333; border-radius: 8px; overflow: hidden; background: #fff; width: fit-content; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        #gameCanvas { display: block; touch-action: none; max-width: 100vw; max-height: 65vh; }
         
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
         
-        #menu-screen { position: fixed; width: 100%; height: 100%; }
+        #menu-screen { position: fixed; width: 100%; height: 100%; z-index: 20; }
         #game-over { display: none; }
-        #info-screen { display: none; text-align: center; position: fixed; width: 100%; height: 100%; }
+        #info-screen { display: none; text-align: center; position: fixed; width: 100%; height: 100%; z-index: 30; }
         
-        h1 { font-size: 24px; color: #2c3e50; margin-bottom: 20px; text-align: center; }
+        h1 { font-size: 32px; color: #2c3e50; margin-bottom: 5px; text-align: center; text-shadow: 2px 2px #fff; }
+        .high-score-list { font-size: 14px; color: #7f8c8d; margin-bottom: 20px; }
         h2 { color: #2c3e50; margin-top: 15px; margin-bottom: 5px; font-size: 18px; }
         p { font-size: 14px; color: #555; line-height: 1.5; margin: 4px 0; }
         
-        .btn { padding: 12px; margin: 6px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; border-radius: 25px; color: white; width: 80%; max-width: 240px; text-align: center; }
+        .btn { padding: 12px; margin: 6px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; border-radius: 25px; color: white; width: 85%; max-width: 260px; text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
+        .btn:active { transform: translateY(2px); box-shadow: none; }
         .btn-easy { background: #2ecc71; }
         .btn-normal { background: #3498db; }
         .btn-hard { background: #e74c3c; }
         .btn-info { background: #f1c40f; color: #333; }
         .btn-back { background: #95a5a6; }
 
-        .thousand-yen-effect { position: absolute; font-size: 20px; font-weight: bold; color: #e67e22; pointer-events: none; animation: fadeUp 1s ease-out forwards; z-index: 100; }
+        .thousand-yen-effect { position: absolute; font-size: 24px; font-weight: bold; color: #e67e22; pointer-events: none; animation: fadeUp 1s ease-out forwards; z-index: 100; text-shadow: 1px 1px #fff; }
         @keyframes fadeUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-40px); } }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
@@ -46,10 +54,15 @@
 
     <div id="menu-screen" class="overlay">
         <h1 id="main-title"></h1>
+        <div class="high-score-list" id="best-scores-info"></div>
         <button class="btn btn-info" onclick="showInfo()"></button>
         <button class="btn btn-easy" onclick="startGame('easy')"></button>
         <button class="btn btn-normal" onclick="startGame('normal')"></button>
         <button class="btn btn-hard" onclick="startGame('hard')"></button>
+        <div class="coin-deco" style="top:10%; left:10%;">\uffe5</div>
+        <div class="coin-deco" style="top:20%; right:15%;">\u2464</div>
+        <div class="coin-deco" style="bottom:15%; left:20%;">\u2460</div>
+        <div class="coin-deco" style="bottom:25%; right:10%;">\u2469</div>
     </div>
 
     <div id="info-screen" class="overlay">
@@ -63,7 +76,10 @@
     <div id="game-ui">
         <button id="home-btn" onclick="goHome()"></button>
         <div id="header">
-            <div id="score-board">SCORE: 0</div>
+            <div class="info-row">
+                <div id="score-board">SCORE: 0</div>
+                <div id="high-score-board">BEST: 0</div>
+            </div>
             <div id="next-container">
                 NEXT: <canvas id="nextCanvas" width="40" height="40"></canvas>
             </div>
@@ -71,6 +87,7 @@
         <div id="game-container">
             <div id="game-over" class="overlay">
                 <h2 id="over-text" style="color:red; font-size:28px; white-space:nowrap;"></h2>
+                <div id="final-score" style="font-weight:bold; margin-bottom:10px;"></div>
                 <button class="btn btn-normal" onclick="goHome()" id="home-btn-retry"></button>
             </div>
         </div>
@@ -91,6 +108,23 @@
         const TXT_DIFF_BODY = "\u304b\u3093\u305f\u3093\uff1a\u8caf\u91d1\u7bb1\u304c\u5e83\u304f\u7c21\u5358\u3002<br>\u3075\u3064\u3046\uff1a\u8caf\u91d1\u7bb1\u304c\u6a19\u6e96\u306e\u5927\u304d\u3055\u3067\u3059\u3002<br>\u3080\u305a\u304b\u3057\u3044\uff1a\u8caf\u91d1\u7bb1\u304c\u72ed\u304f\u3001\u96e3\u3057\u3044\u3002";
         const TXT_CURRENCY = "1000\u5186";
 
+        let currentDiff = 'normal';
+        let highScores = { easy: 0, normal: 0, hard: 0 };
+
+        // ハイスコア読み込み
+        function loadHighScores() {
+            const saved = localStorage.getItem('money_puzzle_scores');
+            if (saved) highScores = JSON.parse(saved);
+            document.getElementById('best-scores-info').innerText = `BEST - \u304b\u3093\u305f\u3093:${highScores.easy} \u3075\u3064\u3046:${highScores.normal} \u3080\u305a\u304b\u3057\u3044:${highScores.hard}`;
+        }
+
+        function saveHighScore(diff, score) {
+            if (score > highScores[diff]) {
+                highScores[diff] = score;
+                localStorage.setItem('money_puzzle_scores', JSON.stringify(highScores));
+            }
+        }
+
         document.getElementById('main-title').innerText = TXT_TITLE;
         document.querySelector('.btn-easy').innerText = TXT_EASY;
         document.querySelector('.btn-normal').innerText = TXT_NORMAL;
@@ -104,6 +138,7 @@
         document.getElementById('over-text').innerText = TXT_GAMEOVER;
         document.getElementById('home-btn').innerText = TXT_HOME;
         document.getElementById('home-btn-retry').innerText = TXT_HOME;
+        loadHighScores();
 
         function showInfo() { document.getElementById('menu-screen').style.display = 'none'; document.getElementById('info-screen').style.display = 'flex'; }
         function hideInfo() { document.getElementById('menu-screen').style.display = 'flex'; document.getElementById('info-screen').style.display = 'none'; }
@@ -128,21 +163,24 @@
         function goHome() {
             if (render) { Render.stop(render); Runner.stop(runner); Engine.clear(engine); render = null; runner = null; engine = null; }
             const container = document.getElementById('game-container');
-            container.innerHTML = `<div id="game-over" class="overlay"><h2 id="over-text" style="color:red; font-size:28px; white-space:nowrap;">${TXT_GAMEOVER}</h2><button class="btn btn-normal" onclick="goHome()" id="home-btn-retry">${TXT_HOME}</button></div>`;
+            container.innerHTML = `<div id="game-over" class="overlay"><h2 id="over-text" style="color:red; font-size:28px; white-space:nowrap;">${TXT_GAMEOVER}</h2><div id="final-score" style="font-weight:bold; margin-bottom:10px;"></div><button class="btn btn-normal" onclick="goHome()" id="home-btn-retry">${TXT_HOME}</button></div>`;
             document.getElementById('menu-screen').style.display = 'flex';
             document.getElementById('game-ui').style.display = 'none';
-            isGameOver = false; score = 0; document.getElementById('score-board').innerText = "SCORE: 0";
+            isGameOver = false; score = 0; 
+            document.getElementById('score-board').innerText = "SCORE: 0";
+            loadHighScores();
         }
 
         function startGame(difficulty) {
-            // スマホ画面幅に合わせて調整
+            currentDiff = difficulty;
             const screenW = window.innerWidth;
-            if(difficulty === 'easy') { gameWidth = Math.min(screenW - 40, 420); gameHeight = 460; }
+            if(difficulty === 'easy') { gameWidth = Math.min(screenW - 40, 400); gameHeight = 460; }
             if(difficulty === 'normal') { gameWidth = Math.min(screenW - 60, 320); gameHeight = 460; }
             if(difficulty === 'hard') { gameWidth = Math.min(screenW - 80, 240); gameHeight = 400; }
 
             document.getElementById('menu-screen').style.display = 'none';
             document.getElementById('game-ui').style.display = 'flex';
+            document.getElementById('high-score-board').innerText = "BEST: " + highScores[currentDiff];
             initGame();
         }
 
@@ -156,7 +194,7 @@
             
             render = Render.create({ canvas: canvas, engine: engine, options: { width: gameWidth, height: gameHeight, wireframes: false, background: '#f8f9fa' } });
             
-            const wallOpt = { isStatic: true, render: { fillStyle: '#333' } };
+            const wallOpt = { isStatic: true, render: { fillStyle: '#444' } };
             const ground = Bodies.rectangle(gameWidth/2, gameHeight+10, gameWidth, 40, wallOpt);
             const leftWall = Bodies.rectangle(-10, gameHeight/2, 40, gameHeight, wallOpt);
             const rightWall = Bodies.rectangle(gameWidth+10, gameHeight/2, 40, gameHeight, wallOpt);
@@ -165,7 +203,6 @@
             nextCoinIndex = Math.floor(Math.random() * 3);
             updateNextCoinDisplay();
 
-            // スマホのタッチ座標取得
             const dropCoin = (e) => {
                 if (isGameOver) return;
                 e.preventDefault();
@@ -222,6 +259,8 @@
                 Composite.allBodies(engine.world).forEach(body => {
                     if (body.position.y < 60 && (now - body.createdAt > 1500) && !body.isStatic) {
                         isGameOver = true;
+                        saveHighScore(currentDiff, score);
+                        document.getElementById('final-score').innerText = "SCORE: " + score;
                         document.getElementById('game-over').style.display = 'flex';
                     }
                 });
