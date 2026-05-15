@@ -22,7 +22,7 @@
         #score-board { font-size: 16px; font-weight: bold; color: #2c3e50; }
         #high-score-board { font-size: 11px; color: #7f8c8d; }
         #next-container { font-size: 12px; color: #555; display: flex; align-items: center; gap: 5px; }
-        #nextCanvas { width: 32px; height: 32px; border: 1px solid #ccc; background: white; border-radius: 50%; }
+        #nextCanvas { width: 36px; height: 36px; border: 1px solid #ccc; background: white; border-radius: 50%; }
         
         #game-container { position: relative; border: 4px solid #333; border-radius: 8px; overflow: hidden; background: #fff; width: fit-content; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-top: 5px; }
         #gameCanvas { display: block; touch-action: none; }
@@ -82,7 +82,7 @@
                 <div id="high-score-board">BEST: 0</div>
             </div>
             <div id="next-container">
-                NEXT: <canvas id="nextCanvas" width="32" height="32"></canvas>
+                NEXT: <canvas id="nextCanvas" width="36" height="36"></canvas>
             </div>
         </div>
         <div id="game-container">
@@ -105,13 +105,14 @@
         let highScores = { easy: 0, normal: 0, hard: 0 };
         const LIMIT_Y = 60;
 
+        // コインのサイズを全体的に大きく調整
         const coinTypes = [
-            { val: 1,   color: '#C0C0C0', radius: 15 },
-            { val: 5,   color: '#FFD700', radius: 19 },
-            { val: 10,  color: '#B87333', radius: 23 },
-            { val: 50,  color: '#E0E0E0', radius: 27 },
-            { val: 100, color: '#C0C0C0', radius: 31 },
-            { val: 500, color: '#FFD700', radius: 35 }
+            { val: 1,   color: '#C0C0C0', radius: 16 },
+            { val: 5,   color: '#FFD700', radius: 21 }, // 穴あり
+            { val: 10,  color: '#B87333', radius: 25 },
+            { val: 50,  color: '#E0E0E0', radius: 30 }, // 穴あり
+            { val: 100, color: '#C0C0C0', radius: 36 },
+            { val: 500, color: '#FFD700', radius: 42 }
         ];
 
         function loadHighScores() {
@@ -145,7 +146,7 @@
         }
 
         function startGame(difficulty) {
-            cleanupGame(); // 開始前に確実に初期化
+            cleanupGame();
             currentDiff = difficulty;
             
             const screenW = window.innerWidth;
@@ -155,9 +156,9 @@
             let gameWidth = 320;
             let gameHeight = 400;
 
-            if(difficulty === 'easy') { gameWidth = Math.min(screenW - 30, 380); gameHeight = Math.min(maxGameHeight, 500); }
-            if(difficulty === 'normal') { gameWidth = Math.min(screenW - 50, 320); gameHeight = Math.min(maxGameHeight, 460); }
-            if(difficulty === 'hard') { gameWidth = Math.min(screenW - 80, 240); gameHeight = Math.min(maxGameHeight, 400); }
+            if(difficulty === 'easy') { gameWidth = Math.min(screenW - 30, 380); gameHeight = Math.min(maxGameHeight, 520); }
+            if(difficulty === 'normal') { gameWidth = Math.min(screenW - 50, 320); gameHeight = Math.min(maxGameHeight, 480); }
+            if(difficulty === 'hard') { gameWidth = Math.min(screenW - 80, 260); gameHeight = Math.min(maxGameHeight, 420); }
 
             document.getElementById('menu-screen').style.display = 'none';
             document.getElementById('game-ui').style.display = 'flex';
@@ -192,13 +193,13 @@
                 const rect = canvas.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const touchX = clientX - rect.left;
-                const clampedX = Math.max(20, Math.min(w - 20, touchX));
+                const clampedX = Math.max(25, Math.min(w - 25, touchX));
                 
                 const type = coinTypes[nextCoinIndex];
                 const coin = Bodies.circle(clampedX, 25, type.radius, { 
                     render: { fillStyle: type.color, strokeStyle: '#333', lineWidth: 2 }, 
                     label: nextCoinIndex.toString(), 
-                    restitution: 0.3
+                    restitution: 0.2
                 });
                 coin.createdAt = Date.now();
                 Composite.add(engine.world, coin);
@@ -222,11 +223,11 @@
                             const nextType = coinTypes[index + 1];
                             const newCoin = Bodies.circle(pos.x, pos.y, nextType.radius, { 
                                 render: { fillStyle: nextType.color, strokeStyle: '#333', lineWidth: 2 }, 
-                                label: (index + 1).toString(), restitution: 0.3 
+                                label: (index + 1).toString(), restitution: 0.2 
                             });
                             newCoin.createdAt = Date.now();
                             Composite.add(engine.world, newCoin);
-                            score += (index + 1) * 5;
+                            score += (index + 1) * 10;
                         } else { showThousandYenEffect(pos.x, pos.y); score += 1000; }
                         document.getElementById('score-board').innerText = "SCORE: " + score;
                     }
@@ -249,13 +250,13 @@
                 });
             });
 
-            // コインの穴を描画
+            // 穴あき硬貨（5円・50円）の穴を描画
             Events.on(render, 'afterRender', () => {
                 const ctx = render.context;
                 Composite.allBodies(engine.world).forEach(body => {
                     const index = parseInt(body.label);
                     if (index === 1 || index === 3) {
-                        ctx.beginPath(); ctx.arc(body.position.x, body.position.y, coinTypes[index].radius / 3, 0, Math.PI * 2);
+                        ctx.beginPath(); ctx.arc(body.position.x, body.position.y, coinTypes[index].radius / 3.5, 0, Math.PI * 2);
                         ctx.fillStyle = '#f8f9fa'; ctx.fill(); ctx.stroke();
                     }
                 });
@@ -269,8 +270,25 @@
         function updateNextCoinDisplay() {
             const nextCtx = document.getElementById('nextCanvas').getContext('2d');
             const coin = coinTypes[nextCoinIndex];
-            nextCtx.clearRect(0, 0, 32, 32);
-            nextCtx.beginPath(); nextCtx.arc(16, 16, coin.radius / 2.2, 0, Math.PI * 2); nextCtx.fillStyle = coin.color; nextCtx.fill(); nextCtx.strokeStyle = "#333"; nextCtx.stroke();
+            const center = 18;
+            nextCtx.clearRect(0, 0, 36, 36);
+            
+            // 硬貨本体
+            nextCtx.beginPath(); 
+            nextCtx.arc(center, center, coin.radius / 2.5, 0, Math.PI * 2); 
+            nextCtx.fillStyle = coin.color; 
+            nextCtx.fill(); 
+            nextCtx.strokeStyle = "#333"; 
+            nextCtx.stroke();
+            
+            // NEXTの穴あき対応
+            if (nextCoinIndex === 1 || nextCoinIndex === 3) {
+                nextCtx.beginPath(); 
+                nextCtx.arc(center, center, (coin.radius / 2.5) / 3.5, 0, Math.PI * 2); 
+                nextCtx.fillStyle = "white"; 
+                nextCtx.fill(); 
+                nextCtx.stroke();
+            }
         }
 
         function showThousandYenEffect(x, y) {
